@@ -1,5 +1,5 @@
-const login = async ({ email, password, persist }) => {
-  console.log("Login service");
+const login = async () => {
+    return "Login service";
 };
 
 module.exports = {

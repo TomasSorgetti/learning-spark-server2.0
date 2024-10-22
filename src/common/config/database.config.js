@@ -4,7 +4,7 @@ const databaseConfig = {
   dbPassword: process.env.DB_PASSWORD,
   dbHost: process.env.DB_HOST,
   dbPort: process.env.DB_PORT,
-  dialect: process.env.DB_DIALECT,
+  dbDialect: process.env.DB_DIALECT,
   pool: {
     max: 5,
     min: 0,

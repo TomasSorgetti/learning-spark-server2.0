@@ -1,7 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
-const { errorHandler } = require("./errors");
+const { errorHandler } = require("./common/errors");
 const app = express();
 
 app.use(morgan("dev"));

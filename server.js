@@ -1,5 +1,5 @@
 const app = require("./src/app.js");
-const { serverConfig } = require("./src/config/index.config.js");
+const { serverConfig } = require("./src/common/config");
 
 app.listen(serverConfig.port, () => {
   console.log("- - - - - - - - - - - - - - - - - - - - -");

@@ -1,10 +1,12 @@
-const { sendErrorResponse, sendSuccessResponse } = require("../../utils");
+const {
+  sendErrorResponse,
+  sendSuccessResponse,
+} = require("../../common/utils");
 const service = require("./auth.service");
 
 const login = async (req, res) => {
-  const { email, password, persist } = req.body;
   try {
-    const data = await service.login(res, { email, password, persist });
+    const data = await service.login();
     sendSuccessResponse(res, 200, "Login success", data);
   } catch (error) {
     sendErrorResponse(res, error.message, error.status);
