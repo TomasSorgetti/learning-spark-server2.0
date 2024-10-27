@@ -73,9 +73,17 @@ const register = async ({ email, password, name, lastname }) => {
   return simplifyUser(user);
 };
 
-const profile = async () => {
-  const users = await db.user.findAll({ include: ['roles'] });
-  return users;
+const profile = async (user) => {
+  const userFound = await db.user.findOne({
+    where: { id: user.id },
+    include: [
+      {
+        model: db.role,
+        attributes: ['name'],
+      },
+    ],
+  });
+  return simplifyUser(userFound);
 };
 
 module.exports = {

@@ -35,8 +35,10 @@ const register = async (req, res) => {
 };
 
 const profile = async (req, res) => {
+  const { user } = req;
+
   try {
-    const data = await service.profile();
+    const data = await service.profile(user);
     sendSuccessResponse(res, 200, 'Profile success', data);
   } catch (error) {
     sendErrorResponse(res, error.message, error.status);

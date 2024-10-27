@@ -17,11 +17,11 @@ const generateRefreshToken = (payload, rememberMe = false) => {
   return jwt.sign(payload, jwtConfig.refreshSecret, { expiresIn });
 };
 
-const verifyAccessToken = (token) => {
-  return jwt.verify(token, jwtConfig.accessSecret);
+const verifyAccessToken = (token, cb) => {
+  return jwt.verify(token, jwtConfig.accessSecret, cb);
 };
-const verifyRefreshToken = (token) => {
-  return jwt.verify(token, jwtConfig.refreshSecret);
+const verifyRefreshToken = (token, cb) => {
+  return jwt.verify(token, jwtConfig.refreshSecret, cb);
 };
 
 module.exports = {
