@@ -1,18 +1,28 @@
+// database/index.js
 const { sequelize, authenticateDatabase } = require('./connection');
 const defineRelationships = require('./relations');
+const { createRoles } = require('./init');
+
+const db = {};
 
 const initializeDatabase = async () => {
   await authenticateDatabase();
 
-  const db = {};
   db.user = require('./models/user.model')(sequelize);
   db.role = require('./models/role.model')(sequelize);
 
   defineRelationships(db);
 
   await sequelize.sync({ force: false });
+  console.log('Database synchronized.');
 
-  return db;
+  await createRoles(db.role);
 };
 
-module.exports = initializeDatabase;
+initializeDatabase().catch((error) => {
+  console.error('Error initializing database:', error);
+});
+
+db.sequelize = sequelize;
+
+module.exports = db;

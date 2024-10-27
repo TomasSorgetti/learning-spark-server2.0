@@ -5,5 +5,6 @@ const { validateSignup, validateSignin } = require('./middlewares');
 
 authRoutes.post('/signin', validateSignin, controller.login);
 authRoutes.post('/signup', validateSignup, controller.register);
+authRoutes.get('/me', controller.profile);
 
 module.exports = authRoutes;

@@ -21,8 +21,17 @@ const register = async (req, res) => {
     sendErrorResponse(res, error.message, error.status);
   }
 };
+const profile = async (req, res) => {
+  try {
+    const data = await service.profile();
+    sendSuccessResponse(res, 200, 'Profile success', data);
+  } catch (error) {
+    sendErrorResponse(res, error.message, error.status);
+  }
+};
 
 module.exports = {
   login,
   register,
+  profile,
 };
