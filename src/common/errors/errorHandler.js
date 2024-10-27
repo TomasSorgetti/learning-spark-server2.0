@@ -1,7 +1,7 @@
-const { sendErrorResponse } = require("../utils");
+const { sendErrorResponse } = require('../utils');
 
-const errorHandler = (err, req, res, next) => {
-  sendErrorResponse(res, "Error interno del servidor", 500, err.message);
+const errorHandler = (err, req, res) => {
+  sendErrorResponse(res, 'Internal server error', 500, err.message);
 };
 
 module.exports = errorHandler;

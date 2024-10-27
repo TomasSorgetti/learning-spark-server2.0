@@ -1,5 +1,5 @@
-const { Sequelize } = require("sequelize");
-const { databaseConfig } = require("../common/config");
+const { Sequelize } = require('sequelize');
+const { databaseConfig } = require('../common/config');
 
 const sequelize = new Sequelize(
   databaseConfig.dbName,
@@ -17,10 +17,10 @@ const sequelize = new Sequelize(
 sequelize
   .authenticate()
   .then(() => {
-    console.log("Connection has been established successfully.");
+    console.log('Connection has been established successfully.');
   })
   .catch((err) => {
-    console.error("Unable to connect to the database:", err);
+    console.error('Unable to connect to the database:', err);
   });
 
 const db = {};
@@ -28,6 +28,6 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.user = require("./models/user.model")(sequelize, Sequelize);
+db.user = require('./models/user.model')(sequelize, Sequelize);
 
 module.exports = db;

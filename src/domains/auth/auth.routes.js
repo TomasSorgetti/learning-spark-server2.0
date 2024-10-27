@@ -1,8 +1,8 @@
-const express = require("express");
+const express = require('express');
 const authRoutes = express.Router();
-const controller = require("./auth.controller");
+const controller = require('./auth.controller');
 
-authRoutes.get("/signin", controller.login);
-authRoutes.get("/signup", controller.register);
+authRoutes.get('/signin', controller.login);
+authRoutes.get('/signup', controller.register);
 
 module.exports = authRoutes;
