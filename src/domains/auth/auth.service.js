@@ -27,6 +27,7 @@ const register = async ({ email, password, name, lastname }) => {
 
   const userSimplified = { ...user.dataValues };
   delete userSimplified.password;
+  // return userSimplified;
   return userSimplified;
 };
 
