@@ -14,4 +14,4 @@ const validateSignin = [
   },
 ];
 
-module.exports = {validateSignin};
+module.exports = { validateSignin };

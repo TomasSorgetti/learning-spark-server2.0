@@ -2,18 +2,44 @@ const { hashPassword, comparePassword } = require('../../common/utils');
 const db = require('../../database/index.js');
 const { HttpError } = require('../../common/errors');
 const { ownerEmail } = require('../../common/config');
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require('../../common/services/jwt.service');
+const simplifyUser = require('./utils/simplifyUser');
 
-const login = async ({ email, password }) => {
+const login = async ({ email, password, rememberMe }) => {
   // Find user
-  const foundUser = await db.user.findOne({ where: { email } });
+  const foundUser = await db.user.findOne({
+    where: { email },
+    include: [
+      {
+        model: db.role,
+        attributes: ['name'],
+      },
+    ],
+  });
   if (!foundUser) throw new HttpError(404, 'User not found');
-  if (!foundUser.deleted) throw new HttpError(401, 'User not active');
+  if (foundUser.deleted) throw new HttpError(401, 'User deleted');
+  // TODO => Add verification logic
+  // if (!foundUser.verified) throw new HttpError(401, 'User not verified');
 
   // Verify password
   const validPassword = comparePassword(password, foundUser.password);
   if (!validPassword) throw new HttpError(401, 'Invalid password');
 
-  
+  // Generate tokens
+  const accessToken = generateAccessToken(
+    { id: foundUser.id, email },
+    rememberMe
+  );
+  const refreshToken = generateRefreshToken(
+    { id: foundUser.id, email },
+    rememberMe
+  );
+
+  // Return simplified user && tokens
+  return { accessToken, refreshToken, user: simplifyUser(foundUser) };
 };
 
 const register = async ({ email, password, name, lastname }) => {
@@ -44,9 +70,7 @@ const register = async ({ email, password, name, lastname }) => {
   // TODO => send email to verify
 
   // Return simplified user
-  const userSimplified = { ...user.dataValues };
-  delete userSimplified.password;
-  return userSimplified;
+  return simplifyUser(user);
 };
 
 const profile = async () => {
