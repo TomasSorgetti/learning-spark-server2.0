@@ -12,7 +12,17 @@ const login = async (req, res) => {
     sendErrorResponse(res, error.message, error.status);
   }
 };
+const register = async (req, res) => {
+  const { email, password, name, lastname } = req.body;
+  try {
+    const data = await service.register({ email, password, name, lastname });
+    sendSuccessResponse(res, 200, "Register success", data);
+  } catch (error) {
+    sendErrorResponse(res, error.message, error.status);
+  }
+};
 
 module.exports = {
   login,
+  register,
 };

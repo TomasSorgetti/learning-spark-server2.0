@@ -1,3 +1,5 @@
-const { sendErrorResponse, sendSuccessResponse } = require("./response");
-
-module.exports = { sendErrorResponse, sendSuccessResponse };
+module.exports = {
+  ...require("./response"),
+  ...require("./sanitize"),
+  ...require("./bcrypt"),
+};

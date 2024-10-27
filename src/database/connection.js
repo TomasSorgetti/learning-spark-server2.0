@@ -28,6 +28,6 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// relations
+db.user = require("./models/user.model")(sequelize, Sequelize);
 
 module.exports = db;
