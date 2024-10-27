@@ -36,4 +36,4 @@ const validateSignup = [
   },
 ];
 
-module.exports = validateSignup;
+module.exports = { validateSignup };

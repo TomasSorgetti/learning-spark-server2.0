@@ -1,5 +1,5 @@
 const { hashPassword } = require('../../common/utils');
-const db = require('../../database/connection');
+const db = require('../../database/index.js');
 const { HttpError } = require('../../common/errors');
 
 const login = async () => {
@@ -8,7 +8,7 @@ const login = async () => {
 const register = async ({ email, password, name, lastname }) => {
   const foundUser = await db.user.findOne({ where: { email } });
   if (foundUser) throw new HttpError(409, 'User already exists');
-  
+
   const hashedPassword = hashPassword(password);
 
   const user = await db.user.create({

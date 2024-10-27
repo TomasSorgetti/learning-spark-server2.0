@@ -14,20 +14,13 @@ const sequelize = new Sequelize(
   }
 );
 
-sequelize
-  .authenticate()
-  .then(() => {
+const authenticateDatabase = async () => {
+  try {
+    await sequelize.authenticate();
     console.log('Connection has been established successfully.');
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('Unable to connect to the database:', err);
-  });
+  }
+};
 
-const db = {};
-
-db.Sequelize = Sequelize;
-db.sequelize = sequelize;
-
-db.user = require('./models/user.model')(sequelize, Sequelize);
-
-module.exports = db;
+module.exports = { sequelize, authenticateDatabase };

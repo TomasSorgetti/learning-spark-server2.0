@@ -1,10 +1,10 @@
 const app = require('./src/app.js');
 const { serverConfig } = require('./src/common/config');
-const db = require('./src/database/connection');
+const initializeDatabase = require('./src/database/index.js');
 
 const startServer = async () => {
   try {
-    await db.sequelize.sync({ force: false });
+    await initializeDatabase();
     console.log('Database synchronized.');
     app.listen(serverConfig.port, () => {
       console.log('- - - - - - - - - - - - - - - - - - - - -');
