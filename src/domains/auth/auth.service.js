@@ -107,6 +107,7 @@ const verify = async (emailToken) => {
 
   return simplifyUser(user);
 };
+
 const profile = async (user) => {
   const userFound = await db.user.findOne({
     where: { id: user.id },
@@ -120,9 +121,38 @@ const profile = async (user) => {
   return simplifyUser(userFound);
 };
 
+const refresh = async (user) => {
+  const userFound = await db.user.findOne({
+    where: { id: user.id },
+    include: [
+      {
+        model: db.role,
+        attributes: ['name'],
+      },
+    ],
+  });
+  const accessToken = generateAccessToken({
+    id: userFound.id,
+    email: userFound.email,
+  });
+  const refreshToken = generateRefreshToken({
+    id: userFound.id,
+    email: userFound.email,
+  });
+
+  return { accessToken, refreshToken, simplifiedUser: simplifyUser(userFound) };
+};
+
+const logout = async (res) => {
+  res.clearCookie('refreshToken');
+  return 'Logout success';
+};
+
 module.exports = {
   login,
   register,
   verify,
   profile,
+  refresh,
+  logout,
 };

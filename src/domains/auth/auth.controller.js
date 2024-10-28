@@ -44,6 +44,7 @@ const verify = async (req, res) => {
     sendErrorResponse(res, error.message, error.status);
   }
 };
+
 const profile = async (req, res) => {
   const { user } = req;
 
@@ -55,9 +56,41 @@ const profile = async (req, res) => {
   }
 };
 
+const refresh = async (req, res) => {
+  const { user } = req;
+  try {
+    const { accessToken, refreshToken, simplifiedUser } =
+      await service.refresh(user);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 30 * 60 * 1000,
+    });
+    sendSuccessResponse(res, 200, 'Refresh token success', {
+      accessToken,
+      user: simplifiedUser,
+    });
+  } catch (error) {
+    sendErrorResponse(res, error.message, error.status);
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    const response = await service.logout(res);
+    sendSuccessResponse(res, 200, response);
+  } catch (error) {
+    sendErrorResponse(res, error.message, error.status);
+  }
+};
+
 module.exports = {
   login,
   register,
   verify,
   profile,
+  refresh,
+  logout,
 };

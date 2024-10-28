@@ -11,5 +11,6 @@ authRoutes.post('/signin', validateSignin, controller.login);
 authRoutes.post('/signup', validateSignup, controller.register);
 authRoutes.get('/verify/:emailToken', controller.verify);
 authRoutes.get('/me', authenticateJWT, controller.profile);
+authRoutes.get('/refresh', controller.refresh);
 
 module.exports = authRoutes;
