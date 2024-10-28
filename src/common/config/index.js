@@ -5,6 +5,7 @@ const config = {
   serverConfig: require('./server.config.js'),
   databaseConfig: require('./database.config.js'),
   jwtConfig: require('./jwt.config.js'),
+  emailConfig: require('./email.config.js'),
 };
 
 module.exports = config;

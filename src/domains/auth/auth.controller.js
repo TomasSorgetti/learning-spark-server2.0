@@ -34,6 +34,16 @@ const register = async (req, res) => {
   }
 };
 
+const verify = async (req, res) => {
+  const { emailToken } = req.params;
+
+  try {
+    const data = await service.verify(emailToken);
+    sendSuccessResponse(res, 200, 'Verify email success', data);
+  } catch (error) {
+    sendErrorResponse(res, error.message, error.status);
+  }
+};
 const profile = async (req, res) => {
   const { user } = req;
 
@@ -48,5 +58,6 @@ const profile = async (req, res) => {
 module.exports = {
   login,
   register,
+  verify,
   profile,
 };

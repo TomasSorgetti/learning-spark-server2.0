@@ -1,12 +1,10 @@
-
 require('dotenv').config();
 
 const serverConfig = {
   port: process.env.PORT || 8080,
-  host: 'localhost',
-  get serverUrl() {
-    return `http://${this.host}:${this.port}`;
-  },
+  host: process.env.HOST,
+  serverUrl: process.env.BACKEND_URL,
+  frontendUrl: process.env.FRONTEND_URL,
 };
 
 module.exports = serverConfig;
