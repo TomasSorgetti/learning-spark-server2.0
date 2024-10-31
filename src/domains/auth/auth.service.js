@@ -49,53 +49,97 @@ const login = async ({ email, password, rememberMe }) => {
 
 const register = async ({ email, password, name, lastname }) => {
   // Find user
-  const foundUser = await db.user.findOne({ where: { email } });
+  const foundUser = await db.user.findOne({
+    where: { email },
+  });
   // if user already exists or is verified throw error
-  if (foundUser && !foundUser.deleted && foundUser.verified)
+  if (foundUser && !foundUser.deleted && foundUser.verified) {
     throw new HttpError(
       409,
       errorCodes.USER_ALREADY_EXISTS,
       'User already exists'
     );
-
-  // Search if user is already registered and not verified
-  // TODO => si el usuario no esta verificado y expiró el codigo de verificación, debería  generar otro y reenviar el email?
-  // if (foundUser && !foundUser.verified) {
-
-  // }
+  }
 
   const hashedPassword = hashPassword(password);
 
-  // Create user
-  const user = await db.user.create({
-    name,
-    lastname,
-    email,
-    password: hashedPassword,
-  });
+  // Search if user is already registered and not verified
+  if (foundUser && !foundUser.verified) {
+    const emailExpiration = await db.emailVerification.findOne({
+      where: { userId: foundUser.id },
+    });
+    console.log('emailExpiration: ', emailExpiration);
 
-  // Add role
-  const isOwner = email === ownerEmail;
-  const role = await db.role.findOne({
-    where: { name: isOwner ? 'Owner' : 'User' },
-  });
-  if (!role) throw new HttpError(500, 'Role not found');
-  await user.addRole(role);
-  await user.reload({
-    include: [
-      {
-        model: db.role,
-        as: 'roles',
-      },
-    ],
-  });
+    if (emailExpiration && emailExpiration.emailCodeExpires < Date.now()) {
+      // Generate new email code && expiration
+      const emailCode = generateRandomNumber();
+      const emailCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
 
-  // TODO => preguntar si el usuario es owner, si es owner, no debe enviar email de verificación
-  // Add expiration code email date
-  if (!isOwner) {
+      // Update email verification
+      await db.emailVerification.update(
+        {
+          emailCode,
+          emailCodeExpires,
+        },
+        { where: { userId: foundUser.id } }
+      );
+      await db.user.update(
+        {
+          password: hashPassword(password),
+          name,
+          lastname,
+        },
+        { where: { id: foundUser.id } }
+      );
+
+      // Send mail
+      try {
+        verifyEmail({ name, lastname, email, emailCode });
+      } catch (error) {
+        throw new HttpError(
+          500,
+          errorCodes.INTERNAL_SERVER_ERROR,
+          error.message
+        );
+      }
+
+      const emailToken = generateAccessToken({ id: foundUser.id, email });
+      return { user: simplifyUser(foundUser), emailToken };
+    } else {
+      throw new HttpError(
+        500,
+        errorCodes.INTERNAL_SERVER_ERROR,
+        'Internal server error'
+      );
+    }
+  } else {
+    // if user doesn't exist
+    // Create user
+    const user = await db.user.create({
+      name,
+      lastname,
+      email,
+      password: hashedPassword,
+    });
+
+    // Add role
+    const isOwner = email === ownerEmail;
+    const role = await db.role.findOne({
+      where: { name: isOwner ? 'Owner' : 'User' },
+    });
+    if (!role) throw new HttpError(500, 'Role not found');
+    await user.addRole(role);
+    await user.reload({
+      include: [
+        {
+          model: db.role,
+          as: 'roles',
+        },
+      ],
+    });
+
     // Set expiration date
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + 1);
+    const emailCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     // Generate email code
     const emailCode = generateRandomNumber();
@@ -103,7 +147,7 @@ const register = async ({ email, password, name, lastname }) => {
     // Save email code
     const emailVerification = await db.emailVerification.create({
       emailCode,
-      expirationDate,
+      emailCodeExpires,
       userId: user.id,
     });
     if (!emailVerification)
@@ -116,41 +160,75 @@ const register = async ({ email, password, name, lastname }) => {
       throw new HttpError(500, errorCodes.INTERNAL_SERVER_ERROR, error.message);
     }
 
+    // TODO => si debería generar el token, en /verify debería ver si es owner o no y darle accesso directo
     const emailToken = generateAccessToken({ id: user.id, email });
     return { user: simplifyUser(user), emailToken };
   }
-
-  return { user: simplifyUser(user) };
 };
 
 const verify = async (user, emailCode) => {
+  // Find user
   const foundUser = await db.user.findOne({
     where: { id: user.id },
+    include: [
+      {
+        model: db.role,
+        as: 'roles',
+        attributes: ['name'],
+      },
+    ],
   });
-  if (!foundUser)
+
+  // if invalid user throw error
+  if (!foundUser) {
     throw new HttpError(404, errorCodes.USER_NOT_FOUND, 'User not found');
-  if (foundUser.deleted)
-    throw new HttpError(400, errorCodes.USER_DELETED, 'User deleted');
-  if (foundUser.verified)
-    throw new HttpError(
-      400,
-      errorCodes.USER_ALREADY_VERIFIED,
-      'User already verified'
-    );
-  // TODO => compare emailCode with user.emailCode
-  console.log(emailCode, foundUser.emailCode);
-
-  if (foundUser.emailCode !== emailCode) {
-    throw new HttpError(
-      400,
-      errorCodes.INVALID_EMAIL_CODE,
-      'Invalid email code'
-    );
   }
-  foundUser.verified = true;
-  await foundUser.save();
+  if (foundUser.deleted) {
+    throw new HttpError(400, errorCodes.USER_DELETED, 'User deleted');
+  }
+  if (foundUser.verified) {
+    // throw new HttpError(
+    //   400,
+    //   errorCodes.USER_ALREADY_VERIFIED,
+    //   'User already verified'
+    // );
+    return simplifyUser(foundUser);
+  }
 
-  return simplifyUser(user);
+  // Search if user is already registered and not verified
+  const emailExpiration = await db.emailVerification.findOne({
+    where: { userId: foundUser.id },
+  });
+
+  if (!emailExpiration) {
+    throw new HttpError(
+      500,
+      errorCodes.INTERNAL_SERVER_ERROR,
+      'Internal server error'
+    );
+  } else {
+    // if email code is expired throw error
+    if (emailExpiration.emailCodeExpires < Date.now()) {
+      throw new HttpError(
+        400,
+        errorCodes.VERIFY_EMAIL_EXPIRED,
+        'Verify email expired'
+      );
+    } else if (emailExpiration.emailCode != emailCode) {
+      // if email code is invalid throw error
+      throw new HttpError(
+        400,
+        errorCodes.VERIFY_EMAIL_CODE_INVALID,
+        'Verify email code invalid'
+      );
+    } else {
+      // update user as verified
+      await db.user.update({ verified: true }, { where: { id: foundUser.id } });
+      // delete email code
+      // await db.emailVerification.destroy({ where: { userId: foundUser.id } });
+      return simplifyUser(foundUser);
+    }
+  }
 };
 
 const profile = async (user) => {
