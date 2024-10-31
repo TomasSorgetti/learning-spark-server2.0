@@ -5,10 +5,10 @@ const { ownerEmail } = require('../../common/config');
 const {
   generateAccessToken,
   generateRefreshToken,
-  verifyAccessToken,
 } = require('../../common/services/jwt.service');
 const simplifyUser = require('./utils/simplifyUser');
 const { verifyEmail } = require('../email/email.service.js');
+const generateRandomNumber = require('../../common/utils/generateNumber.js');
 
 const login = async ({ email, password, rememberMe }) => {
   // Find user
@@ -50,12 +50,19 @@ const login = async ({ email, password, rememberMe }) => {
 const register = async ({ email, password, name, lastname }) => {
   // Find user
   const foundUser = await db.user.findOne({ where: { email } });
-  if (foundUser)
+  // if user already exists or is verified throw error
+  if (foundUser && !foundUser.deleted && foundUser.verified)
     throw new HttpError(
       409,
       errorCodes.USER_ALREADY_EXISTS,
       'User already exists'
     );
+
+  // Search if user is already registered and not verified
+  // TODO => si el usuario no esta verificado y expiró el codigo de verificación, debería  generar otro y reenviar el email?
+  // if (foundUser && !foundUser.verified) {
+
+  // }
 
   const hashedPassword = hashPassword(password);
 
@@ -83,40 +90,65 @@ const register = async ({ email, password, name, lastname }) => {
     ],
   });
 
-  try {
-    const emailToken = generateAccessToken({ id: user.id, email }, false);
-    verifyEmail({ name, lastname, email, emailToken });
-  } catch (error) {
-    console.error('Error al enviar el correo de verificación:', error);
-    throw new HttpError(
-      500,
-      errorCodes.INTERNAL_SERVER_ERROR,
-      'No se pudo enviar el correo de verificación'
-    );
+  // TODO => preguntar si el usuario es owner, si es owner, no debe enviar email de verificación
+  // Add expiration code email date
+  if (!isOwner) {
+    // Set expiration date
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 1);
+
+    // Generate email code
+    const emailCode = generateRandomNumber();
+
+    // Save email code
+    const emailVerification = await db.emailVerification.create({
+      emailCode,
+      expirationDate,
+      userId: user.id,
+    });
+    if (!emailVerification)
+      throw new HttpError(500, 'Email verification not created');
+
+    // Send mail
+    try {
+      verifyEmail({ name, lastname, email, emailCode });
+    } catch (error) {
+      throw new HttpError(500, errorCodes.INTERNAL_SERVER_ERROR, error.message);
+    }
+
+    const emailToken = generateAccessToken({ id: user.id, email });
+    return { user: simplifyUser(user), emailToken };
   }
 
-  return simplifyUser(user);
+  return { user: simplifyUser(user) };
 };
 
-const verify = async (emailToken) => {
-  const decodedToken = verifyAccessToken(emailToken, (err, user) => {
-    if (err) {
-      throw new HttpError(403, errorCodes.INVALID_TOKEN, 'Invalid token');
-    } else {
-      return user;
-    }
+const verify = async (user, emailCode) => {
+  const foundUser = await db.user.findOne({
+    where: { id: user.id },
   });
-  const user = await db.user.findOne({
-    where: { id: decodedToken.id },
-    include: [
-      {
-        model: db.role,
-        attributes: ['name'],
-      },
-    ],
-  });
-  user.verified = true;
-  await user.save();
+  if (!foundUser)
+    throw new HttpError(404, errorCodes.USER_NOT_FOUND, 'User not found');
+  if (foundUser.deleted)
+    throw new HttpError(400, errorCodes.USER_DELETED, 'User deleted');
+  if (foundUser.verified)
+    throw new HttpError(
+      400,
+      errorCodes.USER_ALREADY_VERIFIED,
+      'User already verified'
+    );
+  // TODO => compare emailCode with user.emailCode
+  console.log(emailCode, foundUser.emailCode);
+
+  if (foundUser.emailCode !== emailCode) {
+    throw new HttpError(
+      400,
+      errorCodes.INVALID_EMAIL_CODE,
+      'Invalid email code'
+    );
+  }
+  foundUser.verified = true;
+  await foundUser.save();
 
   return simplifyUser(user);
 };
@@ -156,9 +188,18 @@ const refresh = async (user) => {
   return { accessToken, refreshToken, simplifiedUser: simplifyUser(userFound) };
 };
 
-const logout = async (res) => {
-  res.clearCookie('refreshToken');
-  return 'Logout success';
+const clearSession = async (res) => {
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    sameSite: 'none',
+    secure: 'Lax',
+  });
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    sameSite: 'none',
+    secure: 'Lax',
+  });
+  return 'Logout successful';
 };
 
 module.exports = {
@@ -167,5 +208,5 @@ module.exports = {
   verify,
   profile,
   refresh,
-  logout,
+  clearSession,
 };

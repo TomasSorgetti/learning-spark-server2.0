@@ -1,4 +1,4 @@
-const { emailConfig, serverConfig } = require('../../common/config');
+const { emailConfig } = require('../../common/config');
 const fs = require('fs');
 const path = require('path');
 const handlebars = require('handlebars');
@@ -15,13 +15,12 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const verifyEmail = ({ name, lastname, email, emailToken }) => {
+const verifyEmail = ({ name, lastname, email, emailCode }) => {
   // eslint-disable-next-line no-undef
   const filePath = path.join(__dirname, './templates/emailVerification.html');
   const source = fs.readFileSync(filePath, 'utf-8').toString();
   const template = handlebars.compile(source);
-  const link = `${serverConfig.frontendUrl}/verify/${emailToken}`;
-  const replacements = { name, lastname, link };
+  const replacements = { name, lastname, emailCode };
   const htmlToSend = template(replacements);
 
   const mailOptions = {

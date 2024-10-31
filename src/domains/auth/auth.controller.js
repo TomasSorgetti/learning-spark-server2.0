@@ -21,7 +21,9 @@ const login = async (req, res, next) => {
       httpOnly: true,
       sameSite: 'none',
       secure: 'Lax',
-      maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 30 * 60 * 1000,
+      maxAge: rememberMe
+        ? 90 * 24 * 60 * 60 * 1000 // 90 días en milisegundos
+        : 30 * 24 * 60 * 60 * 1000, // 30 días en milisegundos
     });
     sendSuccessResponse(res, 200, 'Login success', { user });
   } catch (error) {
@@ -32,18 +34,29 @@ const login = async (req, res, next) => {
 const register = async (req, res, next) => {
   const { email, password, name, lastname } = req.body;
   try {
-    const data = await service.register({ email, password, name, lastname });
-    sendSuccessResponse(res, 200, 'Register success', data);
+    const { user, emailToken } = await service.register({
+      email,
+      password,
+      name,
+      lastname,
+    });
+    res.cookie('emailToken', emailToken, {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: 'Lax',
+      maxAge: 15 * 60 * 1000,
+    });
+    sendSuccessResponse(res, 200, 'Register success', user);
   } catch (error) {
     next(error);
   }
 };
 
 const verify = async (req, res, next) => {
-  const { emailToken } = req.params;
-
+  const { emailCode } = req.params;
+  const { user } = req;
   try {
-    const data = await service.verify(emailToken);
+    const data = await service.verify(user, emailCode);
     sendSuccessResponse(res, 200, 'Verify email success', data);
   } catch (error) {
     next(error);
@@ -77,7 +90,7 @@ const refresh = async (req, res, next) => {
       httpOnly: true,
       sameSite: 'none',
       secure: 'Lax',
-      maxAge: 30 * 60 * 1000,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
     sendSuccessResponse(res, 200, 'Refresh token success', {
       user: simplifiedUser,
@@ -89,7 +102,7 @@ const refresh = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    const response = await service.logout(res);
+    const response = await service.clearSession(res);
     sendSuccessResponse(res, 200, response);
   } catch (error) {
     next(error);

@@ -6,12 +6,14 @@ const {
   validateSignin,
   authenticateJWT,
   authenticateRefreshJWT,
+  authenticateJWTEmail,
 } = require('./middlewares');
 
 authRoutes.post('/signin', validateSignin, controller.login);
 authRoutes.post('/signup', validateSignup, controller.register);
-authRoutes.get('/verify/:emailToken', controller.verify);
+authRoutes.get('/verify/:emailCode', authenticateJWTEmail, controller.verify);
 authRoutes.get('/me', authenticateJWT, controller.profile);
 authRoutes.get('/refresh', authenticateRefreshJWT, controller.refresh);
+authRoutes.get('/logout', controller.logout);
 
 module.exports = authRoutes;

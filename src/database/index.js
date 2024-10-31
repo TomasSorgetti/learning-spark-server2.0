@@ -10,6 +10,7 @@ const initializeDatabase = async () => {
 
   db.user = require('./models/user.model')(sequelize);
   db.role = require('./models/role.model')(sequelize);
+  db.emailVerification = require('./models/emailVerification.model')(sequelize);
 
   defineRelationships(db);
 

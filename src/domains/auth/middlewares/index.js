@@ -3,4 +3,5 @@ module.exports = {
   ...require('./register.middleware'),
   ...require('./jwtAuth.middleware'),
   ...require('./jwtRefresh.middleware'),
+  ...require('./jwtEmail.middleware'),
 };
