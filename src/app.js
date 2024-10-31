@@ -1,10 +1,12 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { errorHandler } = require('./common/errors');
 const app = express();
 
 app.use(morgan('dev'));
+app.use(cookieParser());
 const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 app.use(
   cors({

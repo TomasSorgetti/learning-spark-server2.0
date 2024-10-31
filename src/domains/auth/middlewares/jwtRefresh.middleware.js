@@ -1,20 +1,19 @@
 const errorCodes = require('../../../common/errors/errorCodes');
-const { verifyAccessToken } = require('../../../common/services/jwt.service');
+const { verifyRefreshToken } = require('../../../common/services/jwt.service');
 const { sendErrorResponse } = require('../../../common/utils');
 
-const authenticateJWT = (req, res, next) => {
-  // const token = req.headers['authorization']?.split(' ')[1];
-  const token = req.cookies.accessToken;
+const authenticateRefreshJWT = (req, res, next) => {
+  const token = req.cookies.refreshToken;
   if (!token) {
     return sendErrorResponse(
       res,
-      'Access token is required',
+      'Refresh token is required',
       401,
       errorCodes.TOKEN_REQUIRED
     );
   }
 
-  verifyAccessToken(token, (err, user) => {
+  verifyRefreshToken(token, (err, user) => {
     if (err) {
       return sendErrorResponse(
         res,
@@ -29,4 +28,4 @@ const authenticateJWT = (req, res, next) => {
   });
 };
 
-module.exports = { authenticateJWT };
+module.exports = { authenticateRefreshJWT };

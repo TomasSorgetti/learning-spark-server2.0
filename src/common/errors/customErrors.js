@@ -1,8 +1,8 @@
 class HttpError extends Error {
-  constructor(status = 500, message) {
+  constructor(status, code, message) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
-
 module.exports = { HttpError };

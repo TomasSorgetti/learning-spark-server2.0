@@ -1,6 +1,6 @@
 const { hashPassword, comparePassword } = require('../../common/utils');
 const db = require('../../database/index.js');
-const { HttpError } = require('../../common/errors');
+const { HttpError, errorCodes } = require('../../common/errors');
 const { ownerEmail } = require('../../common/config');
 const {
   generateAccessToken,
@@ -21,13 +21,17 @@ const login = async ({ email, password, rememberMe }) => {
       },
     ],
   });
-  if (!foundUser) throw new HttpError(404, 'User not found');
-  if (foundUser.deleted) throw new HttpError(401, 'User deleted');
-  if (!foundUser.verified) throw new HttpError(401, 'User not verified');
+  if (!foundUser)
+    throw new HttpError(404, errorCodes.USER_NOT_FOUND, 'User not found');
+  if (foundUser.deleted)
+    throw new HttpError(401, errorCodes.USER_DELETED, 'User deleted');
+  if (!foundUser.verified)
+    throw new HttpError(401, errorCodes.USER_NOT_VERIFIED, 'User not verified');
 
   // Verify password
   const validPassword = comparePassword(password, foundUser.password);
-  if (!validPassword) throw new HttpError(401, 'Invalid password');
+  if (!validPassword)
+    throw new HttpError(401, errorCodes.INVALID_PASSWORD, 'Invalid password');
 
   // Generate tokens
   const accessToken = generateAccessToken(
@@ -46,7 +50,12 @@ const login = async ({ email, password, rememberMe }) => {
 const register = async ({ email, password, name, lastname }) => {
   // Find user
   const foundUser = await db.user.findOne({ where: { email } });
-  if (foundUser) throw new HttpError(409, 'User already exists');
+  if (foundUser)
+    throw new HttpError(
+      409,
+      errorCodes.USER_ALREADY_EXISTS,
+      'User already exists'
+    );
 
   const hashedPassword = hashPassword(password);
 
@@ -79,7 +88,11 @@ const register = async ({ email, password, name, lastname }) => {
     verifyEmail({ name, lastname, email, emailToken });
   } catch (error) {
     console.error('Error al enviar el correo de verificación:', error);
-    throw new HttpError(500, 'No se pudo enviar el correo de verificación');
+    throw new HttpError(
+      500,
+      errorCodes.INTERNAL_SERVER_ERROR,
+      'No se pudo enviar el correo de verificación'
+    );
   }
 
   return simplifyUser(user);
@@ -88,7 +101,7 @@ const register = async ({ email, password, name, lastname }) => {
 const verify = async (emailToken) => {
   const decodedToken = verifyAccessToken(emailToken, (err, user) => {
     if (err) {
-      throw new HttpError(403, 'Invalid token');
+      throw new HttpError(403, errorCodes.INVALID_TOKEN, 'Invalid token');
     } else {
       return user;
     }
