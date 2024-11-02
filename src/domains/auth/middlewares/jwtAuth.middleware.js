@@ -16,12 +16,21 @@ const authenticateJWT = (req, res, next) => {
 
   verifyAccessToken(token, (err, user) => {
     if (err) {
-      return sendErrorResponse(
-        res,
-        'Invalid token',
-        403,
-        errorCodes.INVALID_TOKEN
-      );
+      if (err.name === 'TokenExpiredError') {
+        return sendErrorResponse(
+          res,
+          'Access token has expired',
+          401,
+          errorCodes.TOKEN_EXPIRED
+        );
+      } else {
+        return sendErrorResponse(
+          res,
+          'Invalid token',
+          403,
+          errorCodes.INVALID_TOKEN
+        );
+      }
     }
 
     req.user = user;

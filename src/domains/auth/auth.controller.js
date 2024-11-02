@@ -14,8 +14,8 @@ const login = async (req, res, next) => {
       sameSite: 'none',
       secure: 'Lax', // for localhost
       maxAge: rememberMe
-        ? 15 * 24 * 60 * 60 * 1000 // 15 days
-        : 15 * 60 * 1000, // 15 minutes
+        ? 90 * 24 * 60 * 60 * 1000 // 90 días en milisegundos
+        : 30 * 24 * 60 * 60 * 1000, // 30 días en milisegundos
     });
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -25,7 +25,7 @@ const login = async (req, res, next) => {
         ? 90 * 24 * 60 * 60 * 1000 // 90 días en milisegundos
         : 30 * 24 * 60 * 60 * 1000, // 30 días en milisegundos
     });
-    sendSuccessResponse(res, 200, 'Login success', { user });
+    sendSuccessResponse(res, 200, 'Login success',  user );
   } catch (error) {
     next(error);
   }
@@ -57,6 +57,13 @@ const verify = async (req, res, next) => {
   const { user } = req;
   try {
     const data = await service.verify(user, emailCode);
+    if (data) {
+      res.clearCookie('emailToken', {
+        httpOnly: true,
+        sameSite: 'none',
+        secure: 'Lax',
+      });
+    }
     sendSuccessResponse(res, 200, 'Verify email success', data);
   } catch (error) {
     next(error);
