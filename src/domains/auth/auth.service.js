@@ -68,7 +68,6 @@ const register = async ({ email, password, name, lastname }) => {
     const emailExpiration = await db.emailVerification.findOne({
       where: { userId: foundUser.id },
     });
-    console.log('emailExpiration: ', emailExpiration);
 
     if (emailExpiration && emailExpiration.emailCodeExpires < Date.now()) {
       // Generate new email code && expiration
@@ -277,7 +276,22 @@ const clearSession = async (res) => {
     sameSite: 'none',
     secure: 'Lax',
   });
+  res.clearCookie('isAuthenticated', {
+    httpOnly: false,
+    sameSite: 'none',
+    secure: 'Lax',
+  });
+
   return 'Logout successful';
+};
+
+const handleGoogleLogin = async (user) => {
+  const { id, email } = user.dataValues;
+
+  const accessToken = generateAccessToken({ id, email });
+  const refreshToken = generateRefreshToken({ id, email });
+
+  return { accessToken, refreshToken };
 };
 
 module.exports = {
@@ -287,4 +301,5 @@ module.exports = {
   profile,
   refresh,
   clearSession,
+  handleGoogleLogin,
 };

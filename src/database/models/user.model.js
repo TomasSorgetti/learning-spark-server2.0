@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
     },
     lastname: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     email: {
       type: DataTypes.STRING,
@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     deleted: {
       type: DataTypes.BOOLEAN,
@@ -31,6 +31,11 @@ module.exports = (sequelize) => {
     verified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    googleId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
     },
   });
 };

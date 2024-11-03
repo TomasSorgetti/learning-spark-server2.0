@@ -3,6 +3,9 @@ const morgan = require('morgan');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { errorHandler } = require('./common/errors');
+const session = require('./common/middlewares/session');
+require('./common/config/passaport');
+
 const app = express();
 
 app.use(morgan('dev'));
@@ -24,6 +27,8 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+session(app);
 
 app.use('/api/v1', require('./routes'));
 app.use('/api/v1/health', (req, res) => {

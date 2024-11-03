@@ -1,10 +1,11 @@
 const { sendSuccessResponse } = require('../../common/utils');
 const service = require('./auth.service');
+const passport = require('passport');
 
 const login = async (req, res, next) => {
   const { email, password, rememberMe } = req.body;
   try {
-    const { accessToken, refreshToken, user } = await service.login({
+    const { accessToken, refreshToken } = await service.login({
       email,
       password,
       rememberMe,
@@ -25,7 +26,15 @@ const login = async (req, res, next) => {
         ? 90 * 24 * 60 * 60 * 1000 // 90 días en milisegundos
         : 30 * 24 * 60 * 60 * 1000, // 30 días en milisegundos
     });
-    sendSuccessResponse(res, 200, 'Login success',  user );
+
+    res.cookie('isAuthenticated', 'true', {
+      httpOnly: false,
+      sameSite: 'none',
+      secure: 'Lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(`${process.env.CLIENT_URL}`);
   } catch (error) {
     next(error);
   }
@@ -99,9 +108,7 @@ const refresh = async (req, res, next) => {
       secure: 'Lax',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    sendSuccessResponse(res, 200, 'Refresh token success', {
-      user: simplifiedUser,
-    });
+    sendSuccessResponse(res, 200, 'Refresh token success', simplifiedUser);
   } catch (error) {
     next(error);
   }
@@ -109,11 +116,77 @@ const refresh = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    const response = await service.clearSession(res);
-    sendSuccessResponse(res, 200, response);
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: 'Lax',
+    });
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: 'Lax',
+    });
+    res.clearCookie('isAuthenticated', {
+      httpOnly: false,
+      sameSite: 'none',
+      secure: 'Lax',
+    });
+    sendSuccessResponse(res, 200, 'Logout success');
   } catch (error) {
     next(error);
   }
+};
+
+const googleLogin = async (req, res, next) => {
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    prompt: 'select_account',
+  })(req, res, next);
+};
+
+const googleCallback = async (req, res, next) => {
+  passport.authenticate(
+    'google',
+    { failureRedirect: '/' },
+    async (err, user, info) => {
+      console.log('CALLBACK INFO', info);
+
+      if (err || !user) {
+        console.log('CALLBACK ERROR', err);
+
+        return res.redirect(`${process.env.CLIENT_URL}/auth/login`);
+      }
+      try {
+        const { accessToken, refreshToken } =
+          await service.handleGoogleLogin(user);
+
+        res.cookie('accessToken', accessToken, {
+          httpOnly: true,
+          sameSite: 'none',
+          secure: 'Lax',
+          maxAge: 15 * 60 * 1000,
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+          httpOnly: true,
+          sameSite: 'none',
+          secure: 'Lax',
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
+
+        res.cookie('isAuthenticated', 'true', {
+          httpOnly: false,
+          sameSite: 'none',
+          secure: 'Lax',
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.redirect(`${process.env.CLIENT_URL}`);
+      } catch (error) {
+        next(error);
+      }
+    }
+  )(req, res);
 };
 
 module.exports = {
@@ -123,4 +196,6 @@ module.exports = {
   profile,
   refresh,
   logout,
+  googleLogin,
+  googleCallback,
 };

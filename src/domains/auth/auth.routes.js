@@ -14,6 +14,9 @@ authRoutes.post('/signup', validateSignup, controller.register);
 authRoutes.get('/verify/:emailCode', authenticateJWTEmail, controller.verify);
 authRoutes.get('/me', authenticateJWT, controller.profile);
 authRoutes.get('/refresh', authenticateRefreshJWT, controller.refresh);
-authRoutes.get('/logout', controller.logout);
+authRoutes.post('/logout', controller.logout);
+
+authRoutes.get('/google', controller.googleLogin);
+authRoutes.get('/google/callback', controller.googleCallback);
 
 module.exports = authRoutes;

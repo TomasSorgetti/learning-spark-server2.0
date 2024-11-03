@@ -3,9 +3,9 @@ const { verifyAccessToken } = require('../../../common/services/jwt.service');
 const { sendErrorResponse } = require('../../../common/utils');
 
 const authenticateJWT = (req, res, next) => {
-  // const token = req.headers['authorization']?.split(' ')[1];
   const token = req.cookies.accessToken;
-  if (!token) {
+
+  if (token == null) {
     return sendErrorResponse(
       res,
       'Access token is required',
