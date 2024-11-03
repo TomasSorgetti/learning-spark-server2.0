@@ -1,3 +1,6 @@
+const { serverConfig } = require('./common/config');
+const Sentry = require('@sentry/node');
+const { nodeProfilingIntegration } = require('@sentry/profiling-node');
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -7,6 +10,12 @@ const session = require('./common/middlewares/session');
 require('./common/config/passaport');
 
 const app = express();
+Sentry.init({
+  dsn: serverConfig.sentryDsn,
+  integrations: [nodeProfilingIntegration()],
+  tracesSampleRate: 1.0,
+  profilesSampleRate: 1.0,
+});
 
 app.use(morgan('dev'));
 app.use(cookieParser());
@@ -35,6 +44,7 @@ app.use('/api/v1/health', (req, res) => {
   res.send('OK');
 });
 
+Sentry.setupExpressErrorHandler(app); // Sentry error handler
 app.use(errorHandler);
 
 module.exports = app;

@@ -8,6 +8,7 @@ const serverConfig = {
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
   SERVER_URL: process.env.SERVER_URL || 'http://localhost:8080',
   SECRET_SESSION: process.env.SECRET_SESSION || '123456',
+  sentryDsn: process.env.SENTRY_DSN,
 };
 
 module.exports = serverConfig;

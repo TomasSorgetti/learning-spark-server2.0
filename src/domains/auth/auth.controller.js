@@ -55,7 +55,7 @@ const register = async (req, res, next) => {
       secure: 'Lax',
       maxAge: 15 * 60 * 1000,
     });
-    sendSuccessResponse(res, 200, 'Register success', user);
+    sendSuccessResponse(res, 201, 'Register success', user);
   } catch (error) {
     next(error);
   }
@@ -131,7 +131,7 @@ const logout = async (req, res, next) => {
       sameSite: 'none',
       secure: 'Lax',
     });
-    sendSuccessResponse(res, 200, 'Logout success');
+    sendSuccessResponse(res, 204, 'Logout success');
   } catch (error) {
     next(error);
   }
