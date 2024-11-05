@@ -4,6 +4,7 @@ const { sendErrorResponse } = require('../../../common/utils');
 
 const authenticateJWTEmail = (req, res, next) => {
   const token = req.cookies.emailToken;
+
   if (!token) {
     return sendErrorResponse(
       res,

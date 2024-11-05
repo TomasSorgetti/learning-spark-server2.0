@@ -14,6 +14,7 @@ passport.use(
       try {
         const user = await db.user.findOne({
           where: { email: profile.emails[0].value.trim().toLowerCase() },
+          include: [{ model: db.role, as: 'roles' }],
         });
 
         if (!user) {

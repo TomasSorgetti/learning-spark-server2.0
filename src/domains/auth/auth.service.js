@@ -21,6 +21,7 @@ const login = async ({ email, password, rememberMe }) => {
       },
     ],
   });
+
   if (!foundUser)
     throw new HttpError(404, errorCodes.USER_NOT_FOUND, 'User not found');
   if (foundUser.deleted)
@@ -40,13 +41,23 @@ const login = async ({ email, password, rememberMe }) => {
   if (!validPassword)
     throw new HttpError(401, errorCodes.INVALID_PASSWORD, 'Invalid password');
 
+  const userRoles = foundUser.roles.map((role) => role.name);
+
   // Generate tokens
   const accessToken = generateAccessToken(
-    { id: foundUser.id, email },
+    {
+      id: foundUser.id,
+      email,
+      roles: userRoles,
+    },
     rememberMe
   );
   const refreshToken = generateRefreshToken(
-    { id: foundUser.id, email },
+    {
+      id: foundUser.id,
+      email,
+      roles: userRoles,
+    },
     rememberMe
   );
 
@@ -58,6 +69,12 @@ const register = async ({ email, password, name, lastname }) => {
   // Find user
   const foundUser = await db.user.findOne({
     where: { email },
+    include: [
+      {
+        model: db.role,
+        attributes: ['name'],
+      },
+    ],
   });
   // if user already exists or is verified throw error
   if (foundUser && !foundUser.deleted && foundUser.verified) {
@@ -263,10 +280,12 @@ const refresh = async (user) => {
   const accessToken = generateAccessToken({
     id: userFound.id,
     email: userFound.email,
+    roles: userFound.roles.map((role) => role.name),
   });
   const refreshToken = generateRefreshToken({
     id: userFound.id,
     email: userFound.email,
+    roles: userFound.roles.map((role) => role.name),
   });
 
   return { accessToken, refreshToken, simplifiedUser: simplifyUser(userFound) };
@@ -293,10 +312,14 @@ const clearSession = async (res) => {
 };
 
 const handleGoogleLogin = async (user) => {
-  const { id, email } = user.dataValues;
+  const { id, email, roles } = user.dataValues;
 
-  const accessToken = generateAccessToken({ id, email });
-  const refreshToken = generateRefreshToken({ id, email });
+  const accessToken = generateAccessToken({
+    id,
+    email,
+    roles,
+  });
+  const refreshToken = generateRefreshToken({ id, email, roles });
 
   return { accessToken, refreshToken };
 };

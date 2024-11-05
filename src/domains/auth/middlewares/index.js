@@ -4,4 +4,5 @@ module.exports = {
   ...require('./jwtAuth.middleware'),
   ...require('./jwtRefresh.middleware'),
   ...require('./jwtEmail.middleware'),
+  ...require('./checkAdminRole.middleware'),
 };

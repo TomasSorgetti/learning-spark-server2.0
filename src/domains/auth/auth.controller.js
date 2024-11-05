@@ -5,7 +5,7 @@ const passport = require('passport');
 const login = async (req, res, next) => {
   const { email, password, rememberMe } = req.body;
   try {
-    const { accessToken, refreshToken } = await service.login({
+    const { accessToken, refreshToken, user } = await service.login({
       email,
       password,
       rememberMe,
@@ -34,7 +34,8 @@ const login = async (req, res, next) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    return res.redirect(`${process.env.CLIENT_URL}`);
+    sendSuccessResponse(res, 200, 'Login success', user );
+
   } catch (error) {
     next(error);
   }
@@ -64,6 +65,8 @@ const register = async (req, res, next) => {
 const verify = async (req, res, next) => {
   const { emailCode } = req.params;
   const { user } = req;
+  console.log('emailCode: ', emailCode);
+
   try {
     const data = await service.verify(user, emailCode);
     if (data) {
