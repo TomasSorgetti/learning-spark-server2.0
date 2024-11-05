@@ -9,6 +9,7 @@ const {
   authenticateJWTEmail,
 } = require('./middlewares');
 
+
 authRoutes.post('/signin', validateSignin, controller.login);
 authRoutes.post('/signup', validateSignup, controller.register);
 authRoutes.get('/verify/:emailCode', authenticateJWTEmail, controller.verify);

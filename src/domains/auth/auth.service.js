@@ -27,6 +27,13 @@ const login = async ({ email, password, rememberMe }) => {
     throw new HttpError(401, errorCodes.USER_DELETED, 'User deleted');
   if (!foundUser.verified)
     throw new HttpError(401, errorCodes.USER_NOT_VERIFIED, 'User not verified');
+  if (foundUser.authMethod !== 'password') {
+    throw new HttpError(
+      401,
+      errorCodes.REGISTERED_WITH_GOOGLE,
+      'User registered with google'
+    );
+  }
 
   // Verify password
   const validPassword = comparePassword(password, foundUser.password);

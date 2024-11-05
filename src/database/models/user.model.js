@@ -37,5 +37,10 @@ module.exports = (sequelize) => {
       allowNull: true,
       unique: true,
     },
+    authMethod: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'password',
+    },
   });
 };

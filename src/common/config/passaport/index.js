@@ -26,6 +26,7 @@ passport.use(
             lastname: lastName,
             googleId: profile.id,
             verified: true,
+            authMethod: 'google',
           });
           const isOwner = profile.emails[0].value === process.env.OWNER_EMAIL;
           const role = await db.role.findOne({
