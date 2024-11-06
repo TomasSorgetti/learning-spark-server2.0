@@ -31,11 +31,12 @@ const login = async (req, res, next) => {
       httpOnly: false,
       sameSite: 'none',
       secure: 'Lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: rememberMe
+        ? 90 * 24 * 60 * 60 * 1000 
+        : 30 * 24 * 60 * 60 * 1000,
     });
 
-    sendSuccessResponse(res, 200, 'Login success', user );
-
+    sendSuccessResponse(res, 200, 'Login success', user);
   } catch (error) {
     next(error);
   }

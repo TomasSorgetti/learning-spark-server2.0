@@ -2,6 +2,7 @@ const { sendErrorResponse } = require('../../../common/utils');
 const errorCodes = require('../../../common/errors/errorCodes');
 
 const checkAdminRole = (req, res, next) => {
+
   if (req.user && req.user.roles.includes('Admin')) {
     return next();
   }
@@ -14,4 +15,4 @@ const checkAdminRole = (req, res, next) => {
   );
 };
 
-module.exports = checkAdminRole;
+module.exports = { checkAdminRole };
